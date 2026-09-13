@@ -3,17 +3,16 @@ package com.tiet.smartsocieties.controller;
 import com.tiet.smartsocieties.dto.event.EventResponse;
 import com.tiet.smartsocieties.dto.society.SocietyResponse;
 import com.tiet.smartsocieties.entity.Category;
-import com.tiet.smartsocieties.entity.InterestTag;
 import com.tiet.smartsocieties.entity.Event;
+import com.tiet.smartsocieties.entity.InterestTag;
 import com.tiet.smartsocieties.entity.Society;
 import com.tiet.smartsocieties.repository.CategoryRepository;
-import com.tiet.smartsocieties.repository.EventRepository;
 import com.tiet.smartsocieties.repository.InterestTagRepository;
-import com.tiet.smartsocieties.repository.SocietyRepository;
+import com.tiet.smartsocieties.service.EventService;
+import com.tiet.smartsocieties.service.SocietyService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
@@ -21,70 +20,47 @@ import java.util.List;
 @RequiredArgsConstructor
 public class PublicController {
 
-    private final SocietyRepository societies;
-    private final EventRepository events;
-    private final CategoryRepository categories;
-    private final InterestTagRepository tags;
+    private final SocietyService societyService;
+    private final EventService eventService;
+    private final CategoryRepository categoryRepository;
+    private final InterestTagRepository interestTagRepository;
 
     @GetMapping("/societies")
-    public List<SocietyResponse> getSocieties() {
+    public List<SocietyResponse> getSocieties(
+            @RequestParam(required = false) String q) {
 
-        return societies.findAll()
+        return societyService.searchSocieties(q)
                 .stream()
                 .map(this::toSocietyResponse)
                 .toList();
     }
 
     @GetMapping("/societies/{id}")
-    public SocietyResponse getSociety(
-            @PathVariable Long id) {
-
-        return societies.findById(id)
-                .map(this::toSocietyResponse)
-                .orElseThrow();
+    public SocietyResponse getSociety(@PathVariable Long id) {
+        return toSocietyResponse(societyService.getSociety(id));
     }
 
     @GetMapping("/categories")
     public List<Category> getCategories() {
-        return categories.findAll();
+        return categoryRepository.findAll();
     }
 
     @GetMapping("/tags")
     public List<InterestTag> getTags() {
-        return tags.findAll();
+        return interestTagRepository.findAll();
     }
 
     @GetMapping("/events/feed")
     public List<EventResponse> getFeed(
             @RequestParam(required = false) String q) {
 
-        List<Event> result;
-
-        if (q == null || q.isBlank()) {
-
-            result = events
-                    .findByStatusAndStartDatetimeAfterOrderByStartDatetimeAsc(
-                            Event.EventStatus.APPROVED,
-                            LocalDateTime.now()
-                    );
-
-        } else {
-
-            result = events
-                    .findByStatusAndTitleContainingIgnoreCaseOrderByStartDatetimeAsc(
-                            Event.EventStatus.APPROVED,
-                            q
-                    );
-        }
-
-        return result.stream()
+        return eventService.searchEvents(q)
+                .stream()
                 .map(this::toEventResponse)
                 .toList();
     }
 
-    private SocietyResponse toSocietyResponse(
-            Society society) {
-
+    private SocietyResponse toSocietyResponse(Society society) {
         return new SocietyResponse(
                 society.getSocietyId(),
                 society.getName(),
@@ -94,9 +70,7 @@ public class PublicController {
         );
     }
 
-    private EventResponse toEventResponse(
-            Event event) {
-
+    private EventResponse toEventResponse(Event event) {
         return new EventResponse(
                 event.getEventId(),
                 event.getSociety().getSocietyId(),

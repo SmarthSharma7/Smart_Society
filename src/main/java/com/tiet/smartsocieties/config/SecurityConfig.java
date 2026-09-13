@@ -1,6 +1,8 @@
 package com.tiet.smartsocieties.config;
 
 import com.tiet.smartsocieties.security.JwtFilter;
+import jakarta.annotation.PostConstruct;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.*;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;

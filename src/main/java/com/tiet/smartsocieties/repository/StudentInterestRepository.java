@@ -7,4 +7,6 @@ import java.util.*;
 
 public interface StudentInterestRepository extends JpaRepository<StudentInterest, StudentInterest.StudentInterestId> {
     List<StudentInterest> findByIdStudentId(Long studentId);
+
+    void deleteByIdStudentId(Long studentId);
 }
