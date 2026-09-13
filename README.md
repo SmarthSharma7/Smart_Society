@@ -26,16 +26,6 @@ DB_USERNAME=postgres
 DB_PASSWORD=YOUR_PASSWORD
 JWT_SECRET=use-a-long-random-secret-at-least-32-bytes
 
-## Important schema update
-Because societies now have a category:
-
-```sql
-ALTER TABLE societies ADD COLUMN IF NOT EXISTS category_id INT;
-ALTER TABLE societies ADD CONSTRAINT fk_society_category FOREIGN KEY (category_id) REFERENCES categories(category_id);
-```
-
-Populate `category_id` for your societies before using the admin society API.
-
 ## Run
 Install JDK 21 and Maven, then:
 
