@@ -1,103 +1,274 @@
 package com.tiet.smartsocieties.controller;
 
-import com.tiet.smartsocieties.entity.*;
-import com.tiet.smartsocieties.repository.*;
+import com.tiet.smartsocieties.dto.event.EventRequest;
+import com.tiet.smartsocieties.dto.event.EventResponse;
+import com.tiet.smartsocieties.dto.society.SocietyRequest;
+import com.tiet.smartsocieties.dto.society.SocietyResponse;
+import com.tiet.smartsocieties.entity.Category;
+import com.tiet.smartsocieties.entity.Event;
+import com.tiet.smartsocieties.entity.Society;
+import com.tiet.smartsocieties.repository.CategoryRepository;
+import com.tiet.smartsocieties.repository.EventRepository;
+import com.tiet.smartsocieties.repository.SocietyRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.*;
-import java.util.*;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/admin")
+@RequiredArgsConstructor
 public class AdminController {
+
     private final SocietyRepository societies;
     private final EventRepository events;
-    private final CategoryRepository cats;
+    private final CategoryRepository categories;
 
-    AdminController(SocietyRepository s, EventRepository e, CategoryRepository c) {
-        societies = s;
-        events = e;
-        cats = c;
-    }
-
-    record SocietyReq(String name, String description, String contactEmail, Long categoryId, String status) {
-    }
-
-    record EventReq(Long societyId, Long categoryId, String title, String description, String venue,
-                    String startDatetime, String endDatetime, String registrationDeadline, Integer maxCapacity,
-                    String status) {
-    }
+    // =========================
+    // SOCIETIES
+    // =========================
 
     @GetMapping("/societies")
-    public List<Society> societies() {
-        return societies.findAll();
+    public List<SocietyResponse> getSocieties() {
+
+        return societies.findAll()
+                .stream()
+                .map(this::toSocietyResponse)
+                .toList();
+    }
+
+    @GetMapping("/societies/{id}")
+    public SocietyResponse getSociety(
+            @PathVariable Long id) {
+
+        Society society = societies.findById(id)
+                .orElseThrow();
+
+        return toSocietyResponse(society);
     }
 
     @PostMapping("/societies")
-    public Society addSociety(@RequestBody SocietyReq r) {
-        var s = new Society();
-        s.setName(r.name());
-        s.setDescription(r.description());
-        s.setContactEmail(r.contactEmail());
-        s.setCategory(cats.findById(r.categoryId()).orElseThrow());
-        if (r.status() != null) s.setStatus(Society.SocietyStatus.valueOf(r.status()));
-        return societies.save(s);
+    public SocietyResponse createSociety(
+            @RequestBody SocietyRequest request) {
+
+        Society society = new Society();
+
+        society.setName(request.name());
+        society.setDescription(request.description());
+        society.setContactEmail(request.contactEmail());
+
+        if (request.status() != null) {
+            society.setStatus(
+                    Society.SocietyStatus.valueOf(
+                            request.status()
+                    )
+            );
+        }
+
+        return toSocietyResponse(
+                societies.save(society)
+        );
     }
 
     @PutMapping("/societies/{id}")
-    public Society updateSociety(@PathVariable Long id, @RequestBody SocietyReq r) {
-        var s = societies.findById(id).orElseThrow();
-        s.setName(r.name());
-        s.setDescription(r.description());
-        s.setContactEmail(r.contactEmail());
-        s.setCategory(cats.findById(r.categoryId()).orElseThrow());
-        if (r.status() != null) s.setStatus(Society.SocietyStatus.valueOf(r.status()));
-        return societies.save(s);
+    public SocietyResponse updateSociety(
+            @PathVariable Long id,
+            @RequestBody SocietyRequest request) {
+
+        Society society = societies.findById(id)
+                .orElseThrow();
+
+        society.setName(request.name());
+        society.setDescription(request.description());
+        society.setContactEmail(request.contactEmail());
+
+        if (request.status() != null) {
+            society.setStatus(
+                    Society.SocietyStatus.valueOf(
+                            request.status()
+                    )
+            );
+        }
+
+        return toSocietyResponse(
+                societies.save(society)
+        );
     }
 
     @DeleteMapping("/societies/{id}")
-    public void deleteSociety(@PathVariable Long id) {
+    public ResponseEntity<?> deleteSociety(
+            @PathVariable Long id) {
+
         societies.deleteById(id);
+
+        return ResponseEntity.ok(
+                "Society deleted successfully"
+        );
+    }
+
+    // =========================
+    // CATEGORIES
+    // =========================
+
+    @GetMapping("/categories")
+    public List<Category> getCategories() {
+        return categories.findAll();
+    }
+
+    // =========================
+    // EVENTS
+    // =========================
+
+    @GetMapping("/events")
+    public List<EventResponse> getEvents() {
+
+        return events.findAll()
+                .stream()
+                .map(this::toEventResponse)
+                .toList();
+    }
+
+    @GetMapping("/events/{id}")
+    public EventResponse getEvent(
+            @PathVariable Long id) {
+
+        Event event = events.findById(id)
+                .orElseThrow();
+
+        return toEventResponse(event);
     }
 
     @PostMapping("/events")
-    public Event addEvent(@RequestBody EventReq r) {
-        var e = new Event();
-        e.setSociety(societies.findById(r.societyId()).orElseThrow());
-        e.setCategory(cats.findById(r.categoryId()).orElseThrow());
-        e.setTitle(r.title());
-        e.setDescription(r.description());
-        e.setVenue(r.venue());
-        e.setStartDatetime(LocalDateTime.parse(r.startDatetime()));
-        e.setEndDatetime(LocalDateTime.parse(r.endDatetime()));
-        if (r.registrationDeadline() != null) e.setRegistrationDeadline(LocalDateTime.parse(r.registrationDeadline()));
-        e.setMaxCapacity(r.maxCapacity());
-        e.setStatus(r.status() == null ? Event.EventStatus.APPROVED : Event.EventStatus.valueOf(r.status()));
-        return events.save(e);
+    public EventResponse createEvent(
+            @RequestBody EventRequest request) {
+
+        Society society = societies.findById(
+                request.societyId()
+        ).orElseThrow();
+
+        Category category = categories.findById(
+                request.categoryId()
+        ).orElseThrow();
+
+        Event event = new Event();
+
+        event.setSociety(society);
+        event.setCategory(category);
+        event.setTitle(request.title());
+        event.setDescription(request.description());
+        event.setVenue(request.venue());
+        event.setStartDatetime(request.startDatetime());
+        event.setEndDatetime(request.endDatetime());
+        event.setRegistrationDeadline(
+                request.registrationDeadline()
+        );
+        event.setMaxCapacity(request.maxCapacity());
+
+        if (request.status() != null) {
+            event.setStatus(
+                    Event.EventStatus.valueOf(
+                            request.status()
+                    )
+            );
+        } else {
+            event.setStatus(
+                    Event.EventStatus.APPROVED
+            );
+        }
+
+        return toEventResponse(
+                events.save(event)
+        );
     }
 
     @PutMapping("/events/{id}")
-    public Event updateEvent(@PathVariable Long id, @RequestBody EventReq r) {
-        var e = events.findById(id).orElseThrow();
-        e.setSociety(societies.findById(r.societyId()).orElseThrow());
-        e.setCategory(cats.findById(r.categoryId()).orElseThrow());
-        e.setTitle(r.title());
-        e.setDescription(r.description());
-        e.setVenue(r.venue());
-        e.setStartDatetime(LocalDateTime.parse(r.startDatetime()));
-        e.setEndDatetime(LocalDateTime.parse(r.endDatetime()));
-        e.setMaxCapacity(r.maxCapacity());
-        if (r.status() != null) e.setStatus(Event.EventStatus.valueOf(r.status()));
-        return events.save(e);
+    public EventResponse updateEvent(
+            @PathVariable Long id,
+            @RequestBody EventRequest request) {
+
+        Event event = events.findById(id)
+                .orElseThrow();
+
+        event.setSociety(
+                societies.findById(
+                        request.societyId()
+                ).orElseThrow()
+        );
+
+        event.setCategory(
+                categories.findById(
+                        request.categoryId()
+                ).orElseThrow()
+        );
+
+        event.setTitle(request.title());
+        event.setDescription(request.description());
+        event.setVenue(request.venue());
+        event.setStartDatetime(request.startDatetime());
+        event.setEndDatetime(request.endDatetime());
+        event.setRegistrationDeadline(
+                request.registrationDeadline()
+        );
+        event.setMaxCapacity(request.maxCapacity());
+
+        if (request.status() != null) {
+            event.setStatus(
+                    Event.EventStatus.valueOf(
+                            request.status()
+                    )
+            );
+        }
+
+        return toEventResponse(
+                events.save(event)
+        );
     }
 
     @DeleteMapping("/events/{id}")
-    public void deleteEvent(@PathVariable Long id) {
+    public ResponseEntity<?> deleteEvent(
+            @PathVariable Long id) {
+
         events.deleteById(id);
+
+        return ResponseEntity.ok(
+                "Event deleted successfully"
+        );
     }
 
-    @GetMapping("/events")
-    public List<Event> events() {
-        return events.findAll();
+    // =========================
+    // DTO MAPPERS
+    // =========================
+
+    private SocietyResponse toSocietyResponse(
+            Society society) {
+
+        return new SocietyResponse(
+                society.getSocietyId(),
+                society.getName(),
+                society.getDescription(),
+                society.getContactEmail(),
+                society.getStatus().name()
+        );
+    }
+
+    private EventResponse toEventResponse(
+            Event event) {
+
+        return new EventResponse(
+                event.getEventId(),
+                event.getSociety().getSocietyId(),
+                event.getSociety().getName(),
+                event.getCategory().getCategoryId(),
+                event.getCategory().getName(),
+                event.getTitle(),
+                event.getDescription(),
+                event.getVenue(),
+                event.getStartDatetime(),
+                event.getEndDatetime(),
+                event.getRegistrationDeadline(),
+                event.getMaxCapacity(),
+                event.getStatus().name()
+        );
     }
 }
