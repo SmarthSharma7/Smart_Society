@@ -4,5 +4,5 @@ import jakarta.validation.constraints.NotEmpty;
 import java.util.List;
 
 public record InterestUpdateRequest(
-        @NotEmpty List<Long> tagIds
+        List<Long> tagIds
 ) {}

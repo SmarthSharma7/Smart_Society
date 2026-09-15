@@ -5,7 +5,6 @@ public record StudentProfileResponse(
         String rollNumber,
         String branch,
         Integer year,
-        String section,
-        String profilePicture
+        String section
 ) {
 }

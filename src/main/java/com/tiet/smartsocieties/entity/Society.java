@@ -2,6 +2,8 @@ package com.tiet.smartsocieties.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.*;
 
@@ -25,7 +27,9 @@ public class Society {
     String contactEmail;
 
     @Enumerated(EnumType.STRING)
-    SocietyStatus status = SocietyStatus.ACTIVE;
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
+    @Column(name = "status", columnDefinition = "society_status")
+    SocietyStatus status;
 
     @Column(name = "created_at")
     LocalDateTime createdAt = LocalDateTime.now();

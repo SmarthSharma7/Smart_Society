@@ -21,6 +21,4 @@ public class StudentProfile {
     String branch;
     Integer year;
     String section;
-    @Column(name = "profile_picture")
-    String profilePicture;
 }

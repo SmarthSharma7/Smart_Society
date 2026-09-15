@@ -33,7 +33,7 @@ public class StudentController {
     @GetMapping("/profile")
     public StudentProfileResponse getProfile(Authentication authentication) {
 
-        Long studentId = Long.valueOf(authentication.getName());
+        Long studentId = getCurrentUserId(authentication);
 
         StudentProfile profile = studentService.getProfile(studentId);
 
@@ -42,8 +42,7 @@ public class StudentController {
                 profile.getRollNumber(),
                 profile.getBranch(),
                 profile.getYear(),
-                profile.getSection(),
-                profile.getProfilePicture()
+                profile.getSection()
         );
     }
 

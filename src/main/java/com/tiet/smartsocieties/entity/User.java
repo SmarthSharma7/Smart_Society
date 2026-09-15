@@ -2,6 +2,8 @@ package com.tiet.smartsocieties.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.*;
 
@@ -21,7 +23,9 @@ public class User {
     @Column(name = "password_hash")
     String passwordHash;
     @Enumerated(EnumType.STRING)
-    Enums.UserRole role;
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
+    @Column(name = "role", columnDefinition = "user_role")
+    private Enums.UserRole role;
     @Column(name = "is_active")
     boolean active = true;
     @Column(name = "created_at")

@@ -2,6 +2,8 @@ package com.tiet.smartsocieties.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.*;
 
@@ -33,7 +35,9 @@ public class Event {
     @Column(name = "max_capacity")
     Integer maxCapacity;
     @Enumerated(EnumType.STRING)
-    EventStatus status = EventStatus.PENDING;
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
+    @Column(name = "status", columnDefinition = "event_status")
+    EventStatus status;
     @Column(name = "created_at")
     LocalDateTime createdAt = LocalDateTime.now();
     @Column(name = "updated_at")
